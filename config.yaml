@@ -1,3 +1,4 @@
+dev: false
 log_level: "debug"
 base_url: "/"
 listen: "0.0.0.0:8080"
