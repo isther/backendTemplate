@@ -10,8 +10,14 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+)
+
+const (
+	filePerm = 0644
+	dirPerm  = 0755
 )
 
 var Server *server
@@ -30,11 +36,25 @@ type server struct {
 		SSLMode  string `yaml:"ssl_mode"`
 		TimeZone string `yaml:"time_zone"`
 	} `yaml:"db"`
+
+	Redis struct {
+		Host     string `yaml:"host"`
+		Port     string `yaml:"port"`
+		Password string `yaml:"password"`
+	} `yaml:"redis"`
 }
 
 func (s *server) DSN() string {
 	return "host=" + s.DB.Host + " port=" + strconv.Itoa(s.DB.Port) + " user=" + s.DB.User + " password=" + s.DB.Password +
 		" dbname=" + s.DB.DBName + " sslmode=" + s.DB.SSLMode + " TimeZone=" + s.DB.TimeZone
+}
+
+func (s *server) RD() *redis.Options {
+	return &redis.Options{
+		Addr:     s.Redis.Host + ":" + s.Redis.Port,
+		Password: s.Redis.Password,
+		DB:       0,
+	}
 }
 
 func init() {
@@ -83,7 +103,7 @@ func init() {
 func setupLogDir() error {
 	var err error
 	if _, err = os.Stat("./logs/"); errors.Is(err, os.ErrNotExist) {
-		err = os.Mkdir("./logs/", 0666)
+		err = os.Mkdir("./logs/", dirPerm)
 	}
 	return err
 }
@@ -92,7 +112,7 @@ func setupLogOutput() error {
 	var err error
 
 	logFileName := time.Now().Format("2006-01-02")
-	logFile, err := os.OpenFile("./logs/"+logFileName+"-app-all.log", syscall.O_CREAT|syscall.O_RDWR|syscall.O_APPEND, 0666)
+	logFile, err := os.OpenFile("./logs/"+logFileName+"-app-all.log", syscall.O_CREAT|syscall.O_RDWR|syscall.O_APPEND, filePerm)
 	if err != nil {
 		return err
 	}
@@ -125,13 +145,13 @@ func setupLogLevel(pLevel string) error {
 func setupGinLog() error {
 	var err error
 	logErrorFileName := time.Now().Format("2006-01-02")
-	logErrorFile, err := os.OpenFile("./logs/"+logErrorFileName+"-gin-error.log", syscall.O_CREAT|syscall.O_RDWR|syscall.O_APPEND, 0666)
+	logErrorFile, err := os.OpenFile("./logs/"+logErrorFileName+"-gin-error.log", syscall.O_CREAT|syscall.O_RDWR|syscall.O_APPEND, filePerm)
 	if err != nil {
 		return err
 	}
 	gin.DefaultErrorWriter = io.MultiWriter(os.Stderr, logErrorFile)
 	logInfoFileName := time.Now().Format("2006-01-02")
-	logInfoFile, err := os.OpenFile("./logs/"+logInfoFileName+"-gin-info.log", syscall.O_CREAT|syscall.O_RDWR|syscall.O_APPEND, 0666)
+	logInfoFile, err := os.OpenFile("./logs/"+logInfoFileName+"-gin-info.log", syscall.O_CREAT|syscall.O_RDWR|syscall.O_APPEND, filePerm)
 	if err != nil {
 		return err
 	}
