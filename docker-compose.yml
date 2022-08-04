@@ -15,7 +15,7 @@ services:
     container_name: wx-redis
     image: redis:latest
     restart: always
-    command: ["redis-server", "--requirepass","redis"]
+    command: ["redis-server", "--requirepass", "redis"]
 
   backend:
     container_name: wx-backend

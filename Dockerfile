@@ -16,7 +16,7 @@ FROM scratch as runner
 
 COPY --from=builder /build/backend /
 COPY --from=builder /build/config.yaml /
-COPY /static /static
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 EXPOSE 8080
 
