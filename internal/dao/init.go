@@ -33,7 +33,7 @@ func initSQL() {
 	}
 
 	// 绑定模型
-	err = DB.AutoMigrate(model.Model{})
+	err = DB.AutoMigrate(&model.Model{})
 	if err != nil {
 		logrus.Fatalln(err)
 	}
